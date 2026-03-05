@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenPCDet 代码阅读笔记</title>
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --sidebar-bg: #1e293b;
+    --sidebar-text: #cbd5e1;
+    --sidebar-active: #38bdf8;
+    --card-bg: #ffffff;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --border: #e2e8f0;
+    --code-bg: #f1f5f9;
+    --accent: #3b82f6;
+    --accent-light: #dbeafe;
+    --green: #10b981;
+    --green-light: #d1fae5;
+    --orange: #f59e0b;
+    --orange-light: #fef3c7;
+    --red: #ef4444;
+    --red-light: #fee2e2;
+    --purple: #8b5cf6;
+    --purple-light: #ede9fe;
+    --sidebar-w: 260px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+  }
+  /* Sidebar */
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0;
+    width: var(--sidebar-w);
+    background: var(--sidebar-bg);
+    color: var(--sidebar-text);
+    overflow-y: auto;
+    padding: 20px 0;
+    z-index: 100;
+  }
+  .sidebar h2 {
+    color: #fff;
+    font-size: 15px;
+    padding: 0 20px 12px;
+    border-bottom: 1px solid #334155;
+    margin-bottom: 8px;
+  }
+  .sidebar .nav-section {
+    padding: 6px 20px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #94a3b8;
+    margin-top: 10px;
+  }
+  .sidebar a {
+    display: block;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    padding: 5px 20px 5px 28px;
+    font-size: 13px;
+    border-left: 3px solid transparent;
+    transition: all .15s;
+  }
+  .sidebar a:hover {
+    color: #fff;
+    background: #334155;
+    border-left-color: var(--sidebar-active);
+  }
+  /* Main */
+  .main {
+    margin-left: var(--sidebar-w);
+    padding: 32px 48px 80px;
+    max-width: 960px;
+  }
+  .main h1 {
+    font-size: 28px;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .main h1 .sub {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 400;
+    display: block;
+    margin-top: 4px;
+  }
+  .main h2 {
+    font-size: 22px;
+    margin: 40px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--accent);
+    color: var(--text);
+  }
+  .main h3 {
+    font-size: 17px;
+    margin: 28px 0 10px;
+    color: var(--text);
+  }
+  .main h4 {
+    font-size: 15px;
+    margin: 18px 0 8px;
+    color: var(--text-secondary);
+  }
+  p, li { font-size: 14px; }
+  p { margin-bottom: 10px; }
+  ul, ol { padding-left: 22px; margin-bottom: 12px; }
+  li { margin-bottom: 4px; }
+  /* Badge */
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    vertical-align: middle;
+  }
+  .badge-blue { background: var(--accent-light); color: var(--accent); }
+  .badge-green { background: var(--green-light); color: var(--green); }
+  .badge-orange { background: var(--orange-light); color: var(--orange); }
+  .badge-red { background: var(--red-light); color: var(--red); }
+  .badge-purple { background: var(--purple-light); color: var(--purple); }
+  /* Card */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .card h4 { margin-top: 0; }
+  /* Table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: var(--code-bg);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--text-secondary);
+  }
+  /* Code */
+  code {
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-size: 12.5px;
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  pre {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 16px 20px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin-bottom: 16px;
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+  /* Syntax highlight */
+  .kw { color: #c084fc; }
+  .fn { color: #38bdf8; }
+  .str { color: #86efac; }
+  .cm { color: #64748b; font-style: italic; }
+  .num { color: #fbbf24; }
+  .op { color: #94a3b8; }
+  /* Callchain */
+  .callchain {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 16px 20px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin-bottom: 16px;
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-size: 12.5px;
+    line-height: 1.8;
+    white-space: pre;
+  }
+  .callchain .node { color: #38bdf8; font-weight: 600; }
+  .callchain .file { color: #94a3b8; }
+  .callchain .arrow { color: #64748b; }
+  /* Source ref */
+  .src {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-family: "JetBrains Mono", monospace;
+  }
+  /* Divider */
+  hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+  /* Print */
+  @media print {
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 20px; max-width: 100%; }
+    pre, .callchain { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== SIDEBAR ==================== -->
+<nav class="sidebar">
+  <h2>📖 OpenPCDet 笔记</h2>
+
+  <div class="nav-section">第一层：项目全貌</div>
+  <a href="#layer1-overview">项目概述</a>
+  <a href="#layer1-structure">目录结构</a>
+  <a href="#layer1-modules">核心功能模块</a>
+  <a href="#layer1-quickstart">快速启动</a>
+
+  <div class="nav-section">第二层：项目骨架</div>
+  <a href="#layer2-train">训练流程调用链</a>
+  <a href="#layer2-inference">推理/评估调用链</a>
+  <a href="#layer2-model-build">模型构建调用链</a>
+  <a href="#layer2-data">数据加载调用链</a>
+
+  <div class="nav-section">第三层：节点详解</div>
+  <a href="#layer3-detector3d">Detector3DTemplate</a>
+  <a href="#layer3-build-networks">build_networks()</a>
+  <a href="#layer3-train-one-epoch">train_one_epoch()</a>
+  <a href="#layer3-model-fn">model_fn_decorator()</a>
+  <a href="#layer3-post-processing">post_processing()</a>
+  <a href="#layer3-dataset-template">DatasetTemplate</a>
+  <a href="#layer3-data-processor">DataProcessor</a>
+  <a href="#layer3-data-augmentor">DataAugmentor</a>
+  <a href="#layer3-voxel-backbone">VoxelBackBone8x</a>
+  <a href="#layer3-bev-backbone">BaseBEVBackbone</a>
+  <a href="#layer3-anchor-head">AnchorHeadSingle</a>
+  <a href="#layer3-config">配置系统</a>
+  <a href="#layer3-optimizer">优化器与调度器</a>
+  <a href="#layer3-detectors">具体检测器实现</a>
+</nav>
+
+<!-- ==================== MAIN ==================== -->
+<div class="main">
+
+<h1>OpenPCDet 代码阅读笔记
+  <span class="sub">基于 v0.6.0 · 系统化三层阅读法</span>
+</h1>
+
+<!-- ============================================================ -->
+<!-- LAYER 1: PROJECT OVERVIEW -->
+<!-- ============================================================ -->
+<h2 id="layer1-overview">第一层：项目全貌 — 项目概述</h2>
+
+<div class="card">
+  <h4>📌 项目摘要</h4>
+  <p><strong>OpenPCDet</strong> 是一个基于 PyTorch 的开源 <span class="badge badge-blue">LiDAR 3D 目标检测</span> 框架。它提供了清晰、简洁、自包含的代码实现，涵盖了多种主流 3D 检测方法的官方代码发布，包括 PointPillar、SECOND、PointRCNN、PV-RCNN、CenterPoint、VoxelNeXt、DSVT、BEVFusion 等。</p>
+  <p>项目支持多个主流数据集：<span class="badge badge-green">KITTI</span> <span class="badge badge-green">Waymo</span> <span class="badge badge-green">nuScenes</span> <span class="badge badge-green">Argoverse2</span>，以及 Lyft、ONCE、Pandaset 等。</p>
+  <p class="src">来源：README.md:1-30</p>
+</div>
+
+<h3>核心特性</h3>
+<ul>
+  <li><strong>模块化设计</strong>：将 3D 检测器拆分为 VFE → 3D Backbone → BEV 投影 → 2D Backbone → 检测头 → ROI Head 的流水线</li>
+  <li><strong>18+ 种检测器</strong>：从单阶段（PointPillar、SECOND）到两阶段（PV-RCNN、Part-A²）到无锚框（CenterPoint）</li>
+  <li><strong>分布式训练</strong>：支持 PyTorch DDP 和 SLURM 集群</li>
+  <li><strong>多模态融合</strong>：BEVFusion、TransFusion 等 LiDAR-Camera 融合方案</li>
+  <li><strong>自定义 CUDA 算子</strong>：3D NMS、ROI Pooling、PointNet++ 采样等</li>
+</ul>
+<p class="src">来源：README.md:5-60, setup.py:58-136</p>
+
+<!-- Directory Structure -->
+<h2 id="layer1-structure">第一层：项目全貌 — 目录结构</h2>
+
+<pre><code>OpenPCDet/
+├── <span class="fn">pcdet/</span>                      <span class="cm"># 核心 Python 包</span>
+│   ├── config.py                <span class="cm"># YAML 配置加载与合并</span>
+│   ├── <span class="fn">datasets/</span>                <span class="cm"># 数据集实现</span>
+│   │   ├── dataset.py           <span class="cm"># DatasetTemplate 基类</span>
+│   │   ├── kitti/               <span class="cm"># KITTI 数据集</span>
+│   │   ├── waymo/               <span class="cm"># Waymo 数据集</span>
+│   │   ├── nuscenes/            <span class="cm"># nuScenes 数据集</span>
+│   │   ├── augmentor/           <span class="cm"># 数据增强模块</span>
+│   │   └── processor/           <span class="cm"># 数据处理流水线</span>
+│   ├── <span class="fn">models/</span>                  <span class="cm"># 模型架构</span>
+│   │   ├── detectors/           <span class="cm"># 18 种检测器实现</span>
+│   │   ├── backbones_3d/        <span class="cm"># 3D 特征提取（稀疏卷积等）</span>
+│   │   │   ├── vfe/             <span class="cm"># 体素特征编码器</span>
+│   │   │   └── pfe/             <span class="cm"># Pillar 特征编码器</span>
+│   │   ├── backbones_2d/        <span class="cm"># 2D 特征提取（BEV CNN）</span>
+│   │   │   └── map_to_bev/      <span class="cm"># 3D→2D 投影模块</span>
+│   │   ├── dense_heads/         <span class="cm"># 检测头（Anchor/Center-based）</span>
+│   │   ├── roi_heads/           <span class="cm"># 两阶段 ROI 细化</span>
+│   │   └── model_utils/         <span class="cm"># NMS、损失函数等工具</span>
+│   ├── <span class="fn">ops/</span>                     <span class="cm"># 自定义 CUDA 算子</span>
+│   │   ├── iou3d_nms/           <span class="cm"># 3D IoU 与 NMS</span>
+│   │   ├── roiaware_pool3d/     <span class="cm"># ROI 感知的 3D 池化</span>
+│   │   ├── pointnet2/           <span class="cm"># PointNet++ 算子</span>
+│   │   └── bev_pool/            <span class="cm"># BEV 池化</span>
+│   └── <span class="fn">utils/</span>                   <span class="cm"># 通用工具函数</span>
+├── <span class="fn">tools/</span>                       <span class="cm"># 训练/测试入口</span>
+│   ├── train.py                 <span class="cm"># 训练入口</span>
+│   ├── test.py                  <span class="cm"># 评估入口</span>
+│   ├── demo.py                  <span class="cm"># 推理演示</span>
+│   ├── <span class="fn">cfgs/</span>                    <span class="cm"># 所有 YAML 配置文件</span>
+│   │   ├── dataset_configs/     <span class="cm"># 数据集基础配置</span>
+│   │   ├── kitti_models/        <span class="cm"># KITTI 模型配置（20+）</span>
+│   │   ├── waymo_models/        <span class="cm"># Waymo 模型配置（25+）</span>
+│   │   └── nuscenes_models/     <span class="cm"># nuScenes 模型配置（10+）</span>
+│   ├── train_utils/             <span class="cm"># 训练工具与优化器</span>
+│   ├── eval_utils/              <span class="cm"># 评估工具</span>
+│   ├── scripts/                 <span class="cm"># 分布式训练脚本</span>
+│   └── visual_utils/            <span class="cm"># 可视化（Open3D/Mayavi）</span>
+├── docs/                        <span class="cm"># 文档</span>
+├── setup.py                     <span class="cm"># 安装脚本（含 CUDA 扩展编译）</span>
+└── requirements.txt             <span class="cm"># Python 依赖</span></code></pre>
+
+<!-- Core Modules -->
+<h2 id="layer1-modules">第一层：项目全貌 — 核心功能模块</h2>
+
+<table>
+  <tr><th>模块</th><th>路径</th><th>职责</th></tr>
+  <tr>
+    <td><span class="badge badge-blue">检测器</span></td>
+    <td><code>pcdet/models/detectors/</code></td>
+    <td>18 种 3D 检测器实现（PointPillar、SECOND、PV-RCNN 等），全部继承自 <code>Detector3DTemplate</code></td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-green">数据集</span></td>
+    <td><code>pcdet/datasets/</code></td>
+    <td>8 种数据集（KITTI、Waymo 等），工厂模式创建，统一 <code>DatasetTemplate</code> 接口</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-orange">3D 骨干网</span></td>
+    <td><code>pcdet/models/backbones_3d/</code></td>
+    <td>稀疏 3D 卷积（VoxelBackBone8x）、PointNet2、DSVT 等</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-purple">检测头</span></td>
+    <td><code>pcdet/models/dense_heads/</code></td>
+    <td>AnchorHead、CenterHead、VoxelNeXtHead、TransFusionHead 等</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-red">CUDA 算子</span></td>
+    <td><code>pcdet/ops/</code></td>
+    <td>3D NMS、ROI 池化、PointNet++ 采样等高性能算子</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-blue">配置系统</span></td>
+    <td><code>pcdet/config.py</code></td>
+    <td>基于 EasyDict 的 YAML 配置加载、继承、命令行覆盖</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-green">训练工具</span></td>
+    <td><code>tools/train_utils/</code></td>
+    <td>训练循环、优化器构建、学习率调度</td>
+  </tr>
+</table>
+
+<!-- Quick Start -->
+<h2 id="layer1-quickstart">第一层：项目全貌 — 快速启动</h2>
+
+<div class="card">
+<h4>🛠 环境安装</h4>
+<pre><code><span class="cm"># 1. 安装依赖</span>
+pip install -r requirements.txt
+
+<span class="cm"># 2. 安装 spconv（根据 CUDA 版本选择）</span>
+pip install spconv-cu113  <span class="cm"># CUDA 11.3 示例</span>
+
+<span class="cm"># 3. 编译 CUDA 扩展并安装 pcdet</span>
+python setup.py develop</code></pre>
+<p class="src">来源：docs/INSTALL.md, setup.py:38-136</p>
+</div>
+
+<div class="card">
+<h4>🚀 训练与评估命令</h4>
+<pre><code><span class="cm"># 单 GPU 训练</span>
+cd tools
+python train.py --cfg_file cfgs/kitti_models/pointpillar.yaml
+
+<span class="cm"># 多 GPU 分布式训练（4 卡）</span>
+bash scripts/dist_train.sh <span class="num">4</span> --cfg_file cfgs/kitti_models/pointpillar.yaml
+
+<span class="cm"># 评估</span>
+python test.py --cfg_file cfgs/kitti_models/pointpillar.yaml \
+    --ckpt ../output/.../checkpoint_epoch_80.pth
+
+<span class="cm"># 推理演示</span>
+python demo.py --cfg_file cfgs/kitti_models/pointpillar.yaml \
+    --ckpt model.pth --data_path ../data/kitti/testing/velodyne/</code></pre>
+<p class="src">来源：tools/train.py:21-50, docs/GETTING_STARTED.md</p>
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<!-- LAYER 2: PROJECT SKELETON -->
+<!-- ============================================================ -->
+<h2 id="layer2-train">第二层：项目骨架 — 训练流程调用链</h2>
+
+<p>训练流程从 <code>tools/train.py</code> 的 <code>main()</code> 函数启动，经过配置解析、数据加载、模型构建、优化器创建，最终进入训练循环。</p>
+
+<div class="callchain"><span class="node">main()</span> <span class="file">[tools/train.py:68]</span>
+<span class="arrow">├──</span> <span class="node">parse_config()</span> <span class="file">[train.py:21]</span>
+<span class="arrow">│   └──</span> cfg_from_yaml_file() <span class="file">[pcdet/config.py:71]</span>
+<span class="arrow">├──</span> <span class="node">build_dataloader()</span> <span class="file">[pcdet/datasets/__init__.py:54]</span>
+<span class="arrow">│   ├──</span> 实例化 KittiDataset / WaymoDataset 等
+<span class="arrow">│   └──</span> 创建 DataLoader + DistributedSampler
+<span class="arrow">├──</span> <span class="node">build_network()</span> <span class="file">[pcdet/models/__init__.py:16]</span>
+<span class="arrow">│   └──</span> build_detector() <span class="file">[pcdet/models/detectors/__init__.py:41]</span>
+<span class="arrow">│       └──</span> Detector3DTemplate.__init__() → build_networks()
+<span class="arrow">├──</span> <span class="node">build_optimizer()</span> <span class="file">[tools/train_utils/optimization/__init__.py:11]</span>
+<span class="arrow">│   └──</span> 创建 Adam / SGD / AdamOneCycle
+<span class="arrow">├──</span> <span class="node">build_scheduler()</span> <span class="file">[tools/train_utils/optimization/__init__.py:40]</span>
+<span class="arrow">│   └──</span> 创建 OneCycleLR / CosineAnnealing / LambdaLR
+<span class="arrow">└──</span> <span class="node">train_model()</span> <span class="file">[tools/train_utils/train_utils.py:150]</span>
+    <span class="arrow">└──</span> <span class="kw">for</span> epoch <span class="kw">in</span> range(total_epochs):
+        <span class="arrow">└──</span> <span class="node">train_one_epoch()</span> <span class="file">[train_utils.py:11]</span>
+            <span class="arrow">└──</span> <span class="kw">for</span> batch <span class="kw">in</span> dataloader:
+                <span class="arrow">├──</span> lr_scheduler.step()
+                <span class="arrow">├──</span> <span class="node">model_func(model, batch)</span> <span class="file">[pcdet/models/__init__.py:39]</span>
+                <span class="arrow">│   ├──</span> load_data_to_gpu(batch)
+                <span class="arrow">│   └──</span> model(batch) → loss, tb_dict, disp_dict
+                <span class="arrow">├──</span> loss.backward()
+                <span class="arrow">├──</span> clip_grad_norm_()
+                <span class="arrow">└──</span> optimizer.step()
+</div>
+
+<h2 id="layer2-inference">第二层：项目骨架 — 推理/评估调用链</h2>
+
+<div class="callchain"><span class="node">main()</span> <span class="file">[tools/test.py:138]</span>
+<span class="arrow">├──</span> <span class="node">parse_config()</span> <span class="file">[test.py:21]</span>
+<span class="arrow">├──</span> <span class="node">build_dataloader()</span> <span class="file">[pcdet/datasets/__init__.py:54]</span>
+<span class="arrow">├──</span> <span class="node">build_network()</span> <span class="file">[pcdet/models/__init__.py:16]</span>
+<span class="arrow">└──</span> <span class="node">eval_single_ckpt()</span> <span class="file">[test.py:58]</span>  <span class="cm">或 repeat_eval_ckpt()</span>
+    <span class="arrow">├──</span> model.load_params_from_file(ckpt)
+    <span class="arrow">└──</span> <span class="node">eval_one_epoch()</span> <span class="file">[eval_utils/eval_utils.py:22]</span>
+        <span class="arrow">└──</span> <span class="kw">for</span> batch <span class="kw">in</span> test_loader:
+            <span class="arrow">├──</span> load_data_to_gpu(batch)
+            <span class="arrow">├──</span> <span class="node">model(batch)</span> → pred_dicts, recall_dict
+            <span class="arrow">│   ├──</span> 逐模块 forward (vfe → backbone → head)
+            <span class="arrow">│   └──</span> <span class="node">post_processing()</span> <span class="file">[detector3d_template.py:178]</span>
+            <span class="arrow">│       └──</span> NMS 过滤 → pred_boxes, pred_scores, pred_labels
+            <span class="arrow">├──</span> statistics_info() <span class="cm"># 累计 recall 指标</span>
+            <span class="arrow">└──</span> dataset.generate_prediction_dicts() <span class="cm"># 格式转换</span>
+</div>
+
+<h2 id="layer2-model-build">第二层：项目骨架 — 模型构建调用链</h2>
+
+<p>模型构建使用 <span class="badge badge-blue">工厂模式 + 模块拓扑</span> 机制。<code>build_network()</code> 根据配置中的 <code>MODEL.NAME</code> 查找对应的检测器类，而检测器内部按照固定的模块拓扑顺序逐个构建子模块。</p>
+
+<div class="callchain"><span class="node">build_network(model_cfg, num_class, dataset)</span> <span class="file">[pcdet/models/__init__.py:16]</span>
+<span class="arrow">└──</span> <span class="node">build_detector(model_cfg, num_class, dataset)</span> <span class="file">[detectors/__init__.py:41]</span>
+    <span class="arrow">└──</span> __all__[model_cfg.NAME](...) <span class="cm"># 字典查找检测器类</span>
+        <span class="arrow">└──</span> <span class="node">Detector3DTemplate.__init__()</span> <span class="file">[detector3d_template.py:15]</span>
+            <span class="arrow">└──</span> <span class="node">build_networks()</span> <span class="file">[detector3d_template.py:35]</span>
+                <span class="arrow">├──</span> 初始化 model_info_dict (特征维度、网格大小等)
+                <span class="arrow">└──</span> <span class="kw">for</span> module_name <span class="kw">in</span> module_topology:
+                    <span class="arrow">├──</span> build_vfe()      → <span class="badge badge-green">PillarVFE / MeanVFE</span>
+                    <span class="arrow">├──</span> build_backbone_3d() → <span class="badge badge-green">VoxelBackBone8x</span>
+                    <span class="arrow">├──</span> build_map_to_bev()  → <span class="badge badge-green">HeightCompression</span>
+                    <span class="arrow">├──</span> build_backbone_2d() → <span class="badge badge-green">BaseBEVBackbone</span>
+                    <span class="arrow">├──</span> build_dense_head()  → <span class="badge badge-green">AnchorHeadSingle</span>
+                    <span class="arrow">├──</span> build_point_head()  → <span class="badge badge-green">PointHeadSimple</span>
+                    <span class="arrow">└──</span> build_roi_head()    → <span class="badge badge-green">PVRCNNHead</span>
+</div>
+
+<h2 id="layer2-data">第二层：项目骨架 — 数据加载调用链</h2>
+
+<div class="callchain"><span class="node">Dataset.__getitem__(index)</span> <span class="file">[pcdet/datasets/kitti/kitti_dataset.py:371]</span>
+<span class="arrow">├──</span> 加载原始数据：get_lidar(), get_calib(), get_label()
+<span class="arrow">├──</span> 坐标转换：Camera → LIDAR 坐标系
+<span class="arrow">└──</span> <span class="node">prepare_data(data_dict)</span> <span class="file">[pcdet/datasets/dataset.py:158]</span>
+    <span class="arrow">├──</span> <span class="node">DataAugmentor.forward()</span> <span class="file">[augmentor/data_augmentor.py:290]</span>  <span class="cm"># 仅训练</span>
+    <span class="arrow">│   ├──</span> gt_sampling()         <span class="cm"># GT 数据库采样</span>
+    <span class="arrow">│   ├──</span> random_world_flip()   <span class="cm"># 全局翻转</span>
+    <span class="arrow">│   ├──</span> random_world_rotation() <span class="cm"># 全局旋转</span>
+    <span class="arrow">│   └──</span> random_world_scaling()  <span class="cm"># 全局缩放</span>
+    <span class="arrow">├──</span> set_lidar_aug_matrix()  <span class="cm"># 构建增强矩阵</span>
+    <span class="arrow">├──</span> 类别过滤 + class index 赋值
+    <span class="arrow">├──</span> <span class="node">PointFeatureEncoder.forward()</span> <span class="file">[processor/point_feature_encoder.py:17]</span>
+    <span class="arrow">│   └──</span> absolute_coordinates_encoding() <span class="cm"># 特征选取与拼接</span>
+    <span class="arrow">└──</span> <span class="node">DataProcessor.forward()</span> <span class="file">[processor/data_processor.py:283]</span>
+        <span class="arrow">├──</span> mask_points_and_boxes_outside_range()
+        <span class="arrow">├──</span> shuffle_points()
+        <span class="arrow">├──</span> transform_points_to_voxels()  <span class="cm"># 体素化</span>
+        <span class="arrow">└──</span> sample_points()  <span class="cm"># 点云下采样</span>
+
+<span class="cm">批次合并:</span>
+<span class="node">collate_batch(batch_list)</span> <span class="file">[dataset.py:220]</span>
+<span class="arrow">├──</span> 拼接 voxels/points（添加 batch_idx）
+<span class="arrow">├──</span> 填充 gt_boxes 到统一长度
+<span class="arrow">└──</span> 填充 images/depth 到最大尺寸
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<!-- LAYER 3: NODE DETAILS -->
+<!-- ============================================================ -->
+<h2 id="layer3-detector3d">第三层：节点详解 — Detector3DTemplate</h2>
+
+<div class="card">
+<h4>📍 定位</h4>
+<p>所有 3D 检测器的 <span class="badge badge-blue">基类</span>。定义了模块拓扑、网络构建、前向传播和后处理的统一接口。</p>
+<p class="src">pcdet/models/detectors/detector3d_template.py:14-416</p>
+</div>
+
+<h4>模块拓扑（module_topology）</h4>
+<p>检测器内部子模块的构建顺序，定义在初始化中：</p>
+<pre><code><span class="kw">self</span>.module_topology = [
+    <span class="str">'vfe'</span>, <span class="str">'backbone_3d'</span>, <span class="str">'map_to_bev_module'</span>, <span class="str">'pfe'</span>,
+    <span class="str">'backbone_2d'</span>, <span class="str">'dense_head'</span>, <span class="str">'point_head'</span>, <span class="str">'roi_head'</span>
+]</code></pre>
+<p class="src">detector3d_template.py:23-26</p>
+
+<h4>关键成员变量</h4>
+<table>
+  <tr><th>变量</th><th>类型</th><th>来源</th><th>含义</th></tr>
+  <tr><td><code>self.model_cfg</code></td><td>EasyDict</td><td>cfg.MODEL</td><td>模型配置字典</td></tr>
+  <tr><td><code>self.num_class</code></td><td>int</td><td>len(CLASS_NAMES)</td><td>检测类别数量</td></tr>
+  <tr><td><code>self.dataset</code></td><td>Dataset</td><td>构造参数</td><td>数据集实例（提供 grid_size、voxel_size 等）</td></tr>
+  <tr><td><code>self.class_names</code></td><td>list</td><td>cfg.CLASS_NAMES</td><td>类别名称列表（如 ['Car','Pedestrian','Cyclist']）</td></tr>
+  <tr><td><code>self.global_step</code></td><td>buffer(int)</td><td>register_buffer</td><td>全局迭代步数（用于学习率调度）</td></tr>
+  <tr><td><code>self.module_list</code></td><td>list</td><td>build_networks()</td><td>按拓扑顺序排列的子模块列表</td></tr>
+</table>
+<p class="src">detector3d_template.py:15-26</p>
+
+<h4>mode 属性</h4>
+<pre><code><span class="kw">@property</span>
+<span class="kw">def</span> <span class="fn">mode</span>(<span class="kw">self</span>):
+    <span class="kw">return</span> <span class="str">'TRAIN'</span> <span class="kw">if</span> <span class="kw">self</span>.training <span class="kw">else</span> <span class="str">'TEST'</span></code></pre>
+<p>用于在配置中区分训练/测试时不同的参数设置（如 <code>MAX_NUMBER_OF_VOXELS.train</code> vs <code>.test</code>）。</p>
+<p class="src">detector3d_template.py:28-30</p>
+
+<!-- build_networks -->
+<h2 id="layer3-build-networks">第三层：节点详解 — build_networks()</h2>
+
+<div class="card">
+<h4>📍 定位</h4>
+<p>在 <code>Detector3DTemplate.__init__()</code> 中调用，负责按模块拓扑顺序逐一构建子模块。</p>
+<p class="src">detector3d_template.py:35-50</p>
+</div>
+
+<h4>输入</h4>
+<p>无显式参数，使用 <code>self.model_cfg</code> 和 <code>self.dataset</code>。</p>
+
+<h4>主要逻辑</h4>
+<ol>
+  <li><strong>初始化 model_info_dict</strong>（行 36-44）：
+    <pre><code>model_info_dict = {
+    <span class="str">'module_list'</span>: [],
+    <span class="str">'num_rawpoint_features'</span>: <span class="kw">self</span>.dataset.point_feature_encoder.num_point_features,
+    <span class="str">'num_point_features'</span>: <span class="kw">self</span>.dataset.point_feature_encoder.num_point_features,
+    <span class="str">'grid_size'</span>: <span class="kw">self</span>.dataset.grid_size,
+    <span class="str">'point_cloud_range'</span>: <span class="kw">self</span>.dataset.point_cloud_range,
+    <span class="str">'voxel_size'</span>: <span class="kw">self</span>.dataset.voxel_size,
+    <span class="str">'depth_downsample_factor'</span>: <span class="kw">self</span>.dataset.depth_downsample_factor
+}</code></pre>
+    <p>这个字典在构建过程中像 <span class="badge badge-orange">接力棒</span> 一样传递，每个模块构建后会更新其中的特征维度信息。</p>
+  </li>
+  <li><strong>遍历 module_topology</strong>（行 45-49）：调用对应的 <code>build_xxx()</code> 方法，将上一模块输出的特征维度传给下一个模块。</li>
+</ol>
+
+<h4>输出</h4>
+<p>返回 <code>model_info_dict['module_list']</code>，即所有构建好的子模块列表。</p>
+
+<h4>模块构建器映射</h4>
+<table>
+  <tr><th>构建方法</th><th>行号</th><th>配置键</th><th>更新的 model_info_dict 键</th></tr>
+  <tr><td><code>build_vfe()</code></td><td>52-66</td><td>MODEL.VFE</td><td><code>num_point_features</code></td></tr>
+  <tr><td><code>build_backbone_3d()</code></td><td>68-83</td><td>MODEL.BACKBONE_3D</td><td><code>backbone_channels</code></td></tr>
+  <tr><td><code>build_map_to_bev_module()</code></td><td>85-95</td><td>MODEL.MAP_TO_BEV</td><td><code>num_bev_features</code></td></tr>
+  <tr><td><code>build_backbone_2d()</code></td><td>97-107</td><td>MODEL.BACKBONE_2D</td><td><code>num_bev_features</code></td></tr>
+  <tr><td><code>build_dense_head()</code></td><td>125-139</td><td>MODEL.DENSE_HEAD</td><td>—</td></tr>
+  <tr><td><code>build_point_head()</code></td><td>141-158</td><td>MODEL.POINT_HEAD</td><td>—</td></tr>
+  <tr><td><code>build_roi_head()</code></td><td>160-173</td><td>MODEL.ROI_HEAD</td><td>—</td></tr>
+</table>
+
+<!-- train_one_epoch -->
+<h2 id="layer3-train-one-epoch">第三层：节点详解 — train_one_epoch()</h2>
+
+<div class="card">
+<h4>📍 定位</h4>
+<p>单个 epoch 的核心训练循环，包含数据获取、前向传播、反向传播和参数更新。</p>
+<p class="src">tools/train_utils/train_utils.py:11-147</p>
+</div>
+
+<h4>函数签名</h4>
+<pre><code><span class="kw">def</span> <span class="fn">train_one_epoch</span>(model, optimizer, train_loader, model_func, lr_scheduler,
+                    accumulated_iter, optim_cfg, rank, tbar, total_it_each_epoch,
+                    dataloader_iter, tb_log, leave_pbar, use_logger_to_record,
+                    logger, logger_iter_interval, cur_epoch, total_epochs,
+                    ckpt_save_dir, ckpt_save_time_interval, show_gpu_stat, use_amp)</code></pre>
+
+<h4>关键变量</h4>
+<table>
+  <tr><th>变量</th><th>行号</th><th>含义</th></tr>
+  <tr><td><code>accumulated_iter</code></td><td>参数/64</td><td>跨 epoch 的全局迭代计数器</td></tr>
+  <tr><td><code>scaler</code></td><td>21</td><td>GradScaler，用于混合精度训练</td></tr>
+  <tr><td><code>data_time</code></td><td>25</td><td>数据加载耗时统计</td></tr>
+  <tr><td><code>forward_time</code></td><td>27</td><td>前向+反向传播耗时</td></tr>
+  <tr><td><code>batch_time</code></td><td>28</td><td>单步总耗时</td></tr>
+</table>
+
+<h4>核心循环逻辑（行 31-144）</h4>
+<pre><code><span class="kw">for</span> cur_it <span class="kw">in</span> range(start_it, total_it_each_epoch):
+    batch = next(dataloader_iter)                <span class="cm"># 获取下一批数据</span>
+    lr_scheduler.step(accumulated_iter, cur_epoch) <span class="cm"># 学习率更新</span>
+    model.train()
+    optimizer.zero_grad()
+    <span class="cm"># 前向传播</span>
+    loss, tb_dict, disp_dict = model_func(model, batch)
+    <span class="cm"># 反向传播（支持 AMP）</span>
+    scaler.scale(loss).backward()
+    clip_grad_norm_(model.parameters(), optim_cfg.GRAD_NORM_CLIP)
+    scaler.step(optimizer)
+    scaler.update()
+    accumulated_iter += <span class="num">1</span></code></pre>
+<p class="src">train_utils.py:31-64</p>
+
+<h4>输出</h4>
+<p>返回更新后的 <code>accumulated_iter</code>（行 147），传递给下一个 epoch。</p>
+
+<!-- model_fn_decorator -->
+<h2 id="layer3-model-fn">第三层：节点详解 — model_fn_decorator()</h2>
+
+<div class="card">
+<h4>📍 定位</h4>
+<p>训练时模型前向传播的 <span class="badge badge-purple">装饰器</span>，负责数据搬移到 GPU 和全局步数更新。</p>
+<p class="src">pcdet/models/__init__.py:39-54</p>
+</div>
+
+<h4>实现逻辑</h4>
+<pre><code><span class="kw">def</span> <span class="fn">model_fn_decorator</span>():
+    ModelReturn = namedtuple(<span class="str">'ModelReturn'</span>, [<span class="str">'loss'</span>, <span class="str">'tb_dict'</span>, <span class="str">'disp_dict'</span>])
+
+    <span class="kw">def</span> <span class="fn">model_func</span>(model, data):
+        load_data_to_gpu(data)             <span class="cm"># numpy → CUDA tensor</span>
+        ret_dict, tb_dict, disp_dict = model(data)  <span class="cm"># 模型前向</span>
+
+        loss = ret_dict[<span class="str">'loss'</span>].mean()     <span class="cm"># 多 GPU 取均值</span>
+        <span class="kw">if</span> hasattr(model, <span class="str">'update_global_step'</span>):
+            model.update_global_step()      <span class="cm"># 全局步数 +1</span>
+
+        <span class="kw">return</span> ModelReturn(loss, tb_dict, disp_dict)
+    <span class="kw">return</span> model_func</code></pre>
+
+<h4>load_data_to_gpu() 细节</h4>
+<ul>
+  <li>遍历 batch_dict 的每个键</li>
+  <li>跳过元数据键（<code>frame_id</code>、<code>metadata</code>、<code>calib</code> 等）</li>
+  <li>将 numpy 数组转为 <code>torch.Tensor</code>，再 <code>.cuda()</code> 搬移到 GPU</li>
+  <li>图像数据特殊处理：使用 <code>kornia</code> 库进行颜色空间转换</li>
+</ul>
+<p class="src">pcdet/models/__init__.py:23-36</p>
+
+<!-- post_processing -->
+<h2 id="layer3-post-processing">第三层：节点详解 — post_processing()</h2>
+
+<div class="card">
+<h4>📍 定位</h4>
+<p>推理阶段的后处理流程，包含 <span class="badge badge-red">NMS 过滤</span> 和 recall 指标计算。在 <code>Detector3DTemplate</code> 中实现，子类可覆盖。</p>
+<p class="src">detector3d_template.py:178-284</p>
+</div>
+
+<h4>输入</h4>
+<p><code>batch_dict</code> 字典，包含 <code>batch_cls_preds</code>（分类预测）、<code>batch_box_preds</code>（框预测）等。</p>
+
+<h4>主要逻辑</h4>
+<ol>
+  <li><strong>获取后处理配置</strong>：<code>POST_PROCESSING</code> 中的 <code>NMS_CONFIG</code>、<code>SCORE_THRESH</code> 等</li>
+  <li><strong>逐批次处理</strong>：遍历 batch 中的每个样本</li>
+  <li><strong>NMS 选择</strong>（行 224-269）：
+    <ul>
+      <li>class_agnostic_nms：类别无关 NMS</li>
+      <li>multi_classes_nms：多类别独立 NMS</li>
+    </ul>
+  </li>
+  <li><strong>Recall 计算</strong>（行 271-274）：根据 <code>RECALL_THRESH_LIST</code>（如 [0.3, 0.5, 0.7]）计算 recall 指标</li>
+</ol>
+
+<h4>输出</h4>
+<p>返回 <code>(pred_dicts, recall_dict)</code>，其中 <code>pred_dicts</code> 包含：</p>
+<pre><code>{
+    <span class="str">'pred_boxes'</span>:  Tensor (N, 7),   <span class="cm"># [x, y, z, l, w, h, θ]</span>
+    <span class="str">'pred_scores'</span>: Tensor (N,),     <span class="cm"># 置信度分数</span>
+    <span class="str">'pred_labels'</span>: Tensor (N,),     <span class="cm"># 类别标签（1-indexed）</span>
+}</code></pre>
+
+<!-- DatasetTemplate -->
+<h2 id="layer3-dataset-template">第三层：节点详解 — DatasetTemplate</h2>
+
+<div class="card">
+<h4>📍 定位</h4>
+<p>所有数据集的 <span class="badge badge-green">基类</span>，继承自 PyTorch 的 <code>torch.utils.data.Dataset</code>。定义了数据加载、增强、处理的统一接口。</p>
+<p class="src">pcdet/datasets/dataset.py:14-326</p>
+</div>
+
+<h4>初始化中的关键成员变量</h4>
+<table>
+  <tr><th>变量</th><th>行号</th><th>来源配置</th><th>含义</th></tr>
+  <tr><td><code>self.point_cloud_range</code></td><td>26</td><td>DATA_CONFIG.POINT_CLOUD_RANGE</td><td>点云范围 [x_min, y_min, z_min, x_max, y_max, z_max]</td></tr>
+  <tr><td><code>self.point_feature_encoder</code></td><td>27-30</td><td>DATA_CONFIG.POINT_FEATURE_ENCODING</td><td>点云特征编码器实例</td></tr>
+  <tr><td><code>self.data_augmentor</code></td><td>31-33</td><td>DATA_CONFIG.DATA_AUGMENTOR</td><td>数据增强器（仅训练时创建）</td></tr>
+  <tr><td><code>self.data_processor</code></td><td>34-37</td><td>DATA_CONFIG.DATA_PROCESSOR</td><td>数据处理流水线</td></tr>
+  <tr><td><code>self.grid_size</code></td><td>39</td><td>由 DataProcessor 计算</td><td>体素网格尺寸 [nx, ny, nz]</td></tr>
+  <tr><td><code>self.voxel_size</code></td><td>40</td><td>DATA_PROCESSOR.VOXEL_SIZE</td><td>体素大小 [vx, vy, vz]</td></tr>
+</table>
+
+<h4>prepare_data() 方法</h4>
+<p>核心数据预处理方法，在 <code>__getitem__</code> 中被调用。</p>
+<pre><code><span class="cm"># 数据流:</span>
+raw_data_dict
+  → DataAugmentor.forward()    <span class="cm"># 增强（仅训练）</span>
+  → set_lidar_aug_matrix()      <span class="cm"># 记录增强变换矩阵</span>
+  → filter by class_names       <span class="cm"># 按类别过滤 GT</span>
+  → PointFeatureEncoder.forward() <span class="cm"># 点特征编码</span>
+  → DataProcessor.forward()      <span class="cm"># 体素化、采样等</span></code></pre>
+<p class="src">dataset.py:158-218</p>
+
+<h4>collate_batch() 方法</h4>
+<p>自定义的批次合并函数，处理不同样本间尺寸不一致的问题：</p>
+<ul>
+  <li><strong>voxels/points</strong>：在第 0 维拼接，并添加 batch_idx 列（行 232-244）</li>
+  <li><strong>gt_boxes</strong>：填充到批次内最大数量（行 245-250）</li>
+  <li><strong>images</strong>：填充到最大 H×W（行 274-301）</li>
+</ul>
+<p class="src">dataset.py:220-325</p>
+
+<!-- DataProcessor -->
+<h2 id="layer3-data-processor">第三层：节点详解 — DataProcessor</h2>
+
+<div class="card">
+<h4>📍 定位</h4>
+<p>数据处理 <span class="badge badge-orange">流水线</span>，在 <code>prepare_data()</code> 末尾调用，负责体素化、点云采样等操作。</p>
+<p class="src">pcdet/datasets/processor/data_processor.py:64-298</p>
+</div>
+
+<h4>初始化</h4>
+<pre><code><span class="kw">self</span>.data_processor_queue = []  <span class="cm"># 处理步骤队列</span>
+<span class="cm"># 根据配置列表逐步添加处理函数 (partial function)</span>
+<span class="kw">for</span> process_cfg <span class="kw">in</span> processor_configs:
+    <span class="kw">self</span>.data_processor_queue.append(
+        partial(getattr(<span class="kw">self</span>, process_cfg.NAME), config=process_cfg)
+    )</code></pre>
+<p class="src">data_processor.py:65-73</p>
+
+<h4>处理步骤详解</h4>
+<table>
+  <tr><th>方法</th><th>行号</th><th>配置键</th><th>功能</th></tr>
+  <tr>
+    <td><code>mask_points_and_boxes_outside_range</code></td><td>79-93</td>
+    <td>—</td><td>过滤 POINT_CLOUD_RANGE 外的点和框</td>
+  </tr>
+  <tr>
+    <td><code>shuffle_points</code></td><td>95-105</td>
+    <td>SHUFFLE_ENABLED</td><td>随机打乱点云顺序</td>
+  </tr>
+  <tr>
+    <td><code>transform_points_to_voxels</code></td><td>133-180</td>
+    <td>VOXEL_SIZE, MAX_POINTS_PER_VOXEL, MAX_NUMBER_OF_VOXELS</td>
+    <td>点云体素化（调用 spconv VoxelGenerator）</td>
+  </tr>
+  <tr>
+    <td><code>sample_points</code></td><td>182-212</td>
+    <td>NUM_POINTS.train/test</td><td>下采样/上采样点云到固定数量</td>
+  </tr>
+  <tr>
+    <td><code>image_normalize</code></td><td>233-245</td>
+    <td>mean, std</td><td>图像归一化</td>
+  </tr>
+</table>
+
+<h4>体素化核心：VoxelGeneratorWrapper</h4>
+<p>封装了 spconv v1/v2 不同版本的 API，核心功能为将散乱点云转换为规则体素：</p>
+<pre><code><span class="cm"># 输入:</span> points (N, C)     <span class="cm"># N 个点，C 维特征</span>
+<span class="cm"># 输出:</span> voxels (M, T, C)   <span class="cm"># M 个体素，每个最多 T 个点</span>
+        coordinates (M, 3) <span class="cm"># 体素坐标 [z, y, x]</span>
+        num_points (M,)    <span class="cm"># 每个体素内的实际点数</span></code></pre>
+<p class="src">data_processor.py:16-61</p>
+
+<!-- DataAugmentor -->
+<h2 id="layer3-data-augmentor">第三层：节点详解 — DataAugmentor</h2>
+
+<div class="card">
+<h4>📍 定位</h4>
+<p>训练阶段的数据增强模块，使用 <span class="badge badge-purple">队列模式</span> 按配置顺序执行增强操作。</p>
+<p class="src">pcdet/datasets/augmentor/data_augmentor.py:10-320</p>
+</div>
+
+<h4>增强方法一览</h4>
+<table>
+  <tr><th>方法</th><th>行号</th><th>配置参数</th><th>效果</th></tr>
+  <tr><td><code>gt_sampling</code></td><td>39-46</td><td>DB_INFO_PATH, SAMPLE_GROUPS</td><td>从 GT 数据库中粘贴物体到场景</td></tr>
+  <tr><td><code>random_world_flip</code></td><td>56-75</td><td>ALONG_AXIS_LIST</td><td>沿 x/y 轴随机翻转</td></tr>
+  <tr><td><code>random_world_rotation</code></td><td>77-95</td><td>WORLD_ROT_ANGLE [-0.78, 0.78]</td><td>全局随机旋转</td></tr>
+  <tr><td><code>random_world_scaling</code></td><td>97-114</td><td>WORLD_SCALE_RANGE [0.95, 1.05]</td><td>全局随机缩放</td></tr>
+  <tr><td><code>random_world_translation</code></td><td>135-156</td><td>NOISE_TRANSLATE_STD</td><td>高斯噪声平移</td></tr>
+  <tr><td><code>random_local_rotation</code></td><td>176-191</td><td>LOCAL_ROT_ANGLE</td><td>单物体独立旋转</td></tr>
+  <tr><td><code>random_local_scaling</code></td><td>193-205</td><td>LOCAL_SCALE_RANGE</td><td>单物体独立缩放</td></tr>
+</table>
+
+<h4>forward() 方法</h4>
+<pre><code><span class="kw">def</span> <span class="fn">forward</span>(<span class="kw">self</span>, data_dict):
+    <span class="kw">for</span> cur_augmentor <span class="kw">in</span> <span class="kw">self</span>.data_augmentor_queue:
+        data_dict = cur_augmentor(data_dict=data_dict)
+    <span class="cm"># 归一化航向角到 [0, 2π]</span>
+    data_dict[<span class="str">'gt_boxes'</span>][:, <span class="num">6</span>] = common_utils.limit_period(
+        data_dict[<span class="str">'gt_boxes'</span>][:, <span class="num">6</span>], offset=<span class="num">0.5</span>, period=<span class="num">2</span> * np.pi)
+    <span class="kw">return</span> data_dict</code></pre>
+<p class="src">data_augmentor.py:290-319</p>
+
+<!-- VoxelBackBone8x -->
+<h2 id="layer3-voxel-backbone">第三层：节点详解 — VoxelBackBone8x</h2>
+
+<div class="card">
+<h4>📍 定位</h4>
+<p><span class="badge badge-orange">稀疏 3D 卷积骨干网络</span>，位于模块拓扑的 <code>backbone_3d</code> 位置。SECOND/PV-RCNN 等方法的核心 3D 特征提取器。</p>
+<p class="src">pcdet/models/backbones_3d/spconv_backbone.py:70-182</p>
+</div>
+
+<h4>网络结构</h4>
+<pre><code><span class="cm"># 4 级稀疏卷积，步长依次为 1x, 2x, 4x, 8x</span>
+Input: voxel_features (M, C) + voxel_coords (M, 4)
+  ↓ conv_input: SubMConv3d(<span class="num">16</span>)   <span class="cm"># 输入层</span>
+  ↓ conv1: SparseConv + SubMConv (<span class="num">16</span>ch, stride=<span class="num">1</span>)
+  ↓ conv2: SparseConv + SubMConv (<span class="num">32</span>ch, stride=<span class="num">2</span>)
+  ↓ conv3: SparseConv + SubMConv (<span class="num">64</span>ch, stride=<span class="num">4</span>)
+  ↓ conv4: SparseConv + SubMConv (<span class="num">64</span>ch, stride=<span class="num">8</span>)
+  ↓ conv_out: SparseConv3d → <span class="num">128</span>ch
+Output: encoded_spconv_tensor + multi_scale_3d_features</code></pre>
+
+<h4>输入/输出</h4>
+<table>
+  <tr><th>数据</th><th>键名</th><th>形状</th><th>说明</th></tr>
+  <tr><td>输入</td><td><code>voxel_features</code></td><td>(M, C)</td><td>M 个体素的特征</td></tr>
+  <tr><td>输入</td><td><code>voxel_coords</code></td><td>(M, 4)</td><td>[batch_idx, z, y, x]</td></tr>
+  <tr><td>输出</td><td><code>encoded_spconv_tensor</code></td><td>SparseConvTensor</td><td>8 倍下采样的稀疏张量</td></tr>
+  <tr><td>输出</td><td><code>multi_scale_3d_features</code></td><td>dict</td><td>x_conv1~x_conv4 多尺度特征</td></tr>
+</table>
+<p class="src">spconv_backbone.py:129-181</p>
+
+<!-- BaseBEVBackbone -->
+<h2 id="layer3-bev-backbone">第三层：节点详解 — BaseBEVBackbone</h2>
+
+<div class="card">
+<h4>📍 定位</h4>
+<p><span class="badge badge-blue">2D BEV 骨干网络</span>，位于模块拓扑的 <code>backbone_2d</code> 位置。对鸟瞰图特征进行多尺度下采样-上采样处理。</p>
+<p class="src">pcdet/models/backbones_2d/base_bev_backbone.py:6-100</p>
+</div>
+
+<h4>配置与变量映射</h4>
+<table>
+  <tr><th>配置键</th><th>含义</th><th>示例值</th></tr>
+  <tr><td><code>LAYER_NUMS</code></td><td>每个阶段的卷积块数量</td><td>[3, 5, 5]</td></tr>
+  <tr><td><code>LAYER_STRIDES</code></td><td>每个阶段的下采样步长</td><td>[2, 2, 2]</td></tr>
+  <tr><td><code>NUM_FILTERS</code></td><td>每个阶段的通道数</td><td>[64, 128, 256]</td></tr>
+  <tr><td><code>UPSAMPLE_STRIDES</code></td><td>上采样步长</td><td>[1, 2, 4]</td></tr>
+  <tr><td><code>NUM_UPSAMPLE_FILTERS</code></td><td>上采样后通道数</td><td>[128, 128, 128]</td></tr>
+</table>
+
+<h4>前向传播</h4>
+<pre><code><span class="kw">def</span> <span class="fn">forward</span>(<span class="kw">self</span>, data_dict):
+    spatial_features = data_dict[<span class="str">'spatial_features'</span>]  <span class="cm"># from map_to_bev</span>
+    ups = []
+    <span class="kw">for</span> i <span class="kw">in</span> range(len(<span class="kw">self</span>.blocks)):
+        x = <span class="kw">self</span>.blocks[i](x)      <span class="cm"># 下采样</span>
+        ups.append(<span class="kw">self</span>.deblocks[i](x)) <span class="cm"># 上采样到统一尺度</span>
+    x = torch.cat(ups, dim=<span class="num">1</span>)       <span class="cm"># 拼接多尺度特征</span>
+    data_dict[<span class="str">'spatial_features_2d'</span>] = x
+    <span class="kw">return</span> data_dict</code></pre>
+<p>输出通道数 = <code>sum(NUM_UPSAMPLE_FILTERS)</code>（例如 128+128+128=384）。</p>
+<p class="src">base_bev_backbone.py:81-96</p>
+
+<!-- AnchorHeadSingle -->
+<h2 id="layer3-anchor-head">第三层：节点详解 — AnchorHeadSingle</h2>
+
+<div class="card">
+<h4>📍 定位</h4>
+<p><span class="badge badge-purple">单阶段检测头</span>，PointPillar/SECOND 等方法使用的 Anchor-based 检测头。继承自 <code>AnchorHeadTemplate</code>。</p>
+<p class="src">pcdet/models/dense_heads/anchor_head_single.py:7-75</p>
+</div>
+
+<h4>网络结构</h4>
+<pre><code><span class="cm"># 三个并行的 1×1 卷积</span>
+conv_cls:     Conv2d(in_ch, num_anchors × num_class, <span class="num">1</span>)  <span class="cm"># 分类</span>
+conv_box:     Conv2d(in_ch, num_anchors × code_size, <span class="num">1</span>)  <span class="cm"># 回归</span>
+conv_dir_cls: Conv2d(in_ch, num_anchors × <span class="num">2</span>, <span class="num">1</span>)          <span class="cm"># 方向分类</span></code></pre>
+<p class="src">anchor_head_single.py:17-31</p>
+
+<h4>输入/输出形状</h4>
+<table>
+  <tr><th>数据</th><th>形状</th><th>说明</th></tr>
+  <tr><td>输入 <code>spatial_features_2d</code></td><td>[B, C, H, W]</td><td>BEV 特征图</td></tr>
+  <tr><td>cls_preds</td><td>[B, H, W, A×K]</td><td>A=锚框数, K=类别数</td></tr>
+  <tr><td>box_preds</td><td>[B, H, W, A×7]</td><td>7 = [x,y,z,l,w,h,θ]</td></tr>
+  <tr><td>dir_cls_preds</td><td>[B, H, W, A×2]</td><td>方向二分类</td></tr>
+</table>
+
+<h4>锚框生成配置示例（KITTI PointPillar）</h4>
+<pre><code>ANCHOR_GENERATOR_CONFIG:
+  - class_name: Car
+    anchor_sizes: [[<span class="num">3.9</span>, <span class="num">1.6</span>, <span class="num">1.56</span>]]   <span class="cm"># [长, 宽, 高]</span>
+    anchor_rotations: [<span class="num">0</span>, <span class="num">1.57</span>]        <span class="cm"># 0° 和 90°</span>
+    anchor_bottom_heights: [<span class="num">-1.78</span>]     <span class="cm"># 底面高度</span>
+    matched_threshold: <span class="num">0.6</span>            <span class="cm"># 正样本 IoU 阈值</span>
+    unmatched_threshold: <span class="num">0.45</span>         <span class="cm"># 负样本 IoU 阈值</span></code></pre>
+<p class="src">tools/cfgs/kitti_models/pointpillar.yaml:81-112</p>
+
+<!-- Config System -->
+<h2 id="layer3-config">第三层：节点详解 — 配置系统</h2>
+
+<div class="card">
+<h4>📍 定位</h4>
+<p>基于 <code>EasyDict</code> 和 YAML 的层级配置系统，支持 <span class="badge badge-blue">配置继承</span> 和命令行覆盖。</p>
+<p class="src">pcdet/config.py:1-85</p>
+</div>
+
+<h4>核心函数</h4>
+<table>
+  <tr><th>函数</th><th>行号</th><th>功能</th></tr>
+  <tr><td><code>cfg_from_yaml_file()</code></td><td>71-80</td><td>加载 YAML 文件到 EasyDict</td></tr>
+  <tr><td><code>merge_new_config()</code></td><td>51-68</td><td>递归合并配置，支持 <code>_BASE_CONFIG_</code> 继承</td></tr>
+  <tr><td><code>cfg_from_list()</code></td><td>16-48</td><td>解析命令行 <code>--set K1 V1 K2 V2</code> 覆盖配置</td></tr>
+  <tr><td><code>log_config_to_file()</code></td><td>7-13</td><td>将配置树递归打印到日志</td></tr>
+</table>
+
+<h4>配置继承机制</h4>
+<pre><code><span class="cm"># pointpillar.yaml 中：</span>
+DATA_CONFIG:
+    _BASE_CONFIG_: cfgs/dataset_configs/kitti_dataset.yaml
+    <span class="cm"># 以下字段会覆盖基础配置中的同名字段</span>
+    POINT_CLOUD_RANGE: [<span class="num">0</span>, <span class="num">-39.68</span>, <span class="num">-3</span>, <span class="num">69.12</span>, <span class="num">39.68</span>, <span class="num">1</span>]</code></pre>
+<p><code>merge_new_config()</code> 首先加载 <code>_BASE_CONFIG_</code> 指向的基础 YAML，然后用当前文件中的字段覆盖。</p>
+<p class="src">config.py:52-58</p>
+
+<h4>配置结构总览</h4>
+<pre><code>cfg (EasyDict)
+├── ROOT_DIR                      <span class="cm"># 项目根目录</span>
+├── LOCAL_RANK                    <span class="cm"># 分布式训练本地 rank</span>
+├── CLASS_NAMES                   <span class="cm"># ['Car', 'Pedestrian', 'Cyclist']</span>
+├── DATA_CONFIG
+│   ├── DATASET                   <span class="cm"># 'KittiDataset'</span>
+│   ├── DATA_PATH                 <span class="cm"># 数据根目录</span>
+│   ├── POINT_CLOUD_RANGE         <span class="cm"># 点云裁剪范围</span>
+│   ├── DATA_SPLIT                <span class="cm"># {train: 'train', test: 'val'}</span>
+│   ├── INFO_PATH                 <span class="cm"># 预处理信息文件路径</span>
+│   ├── POINT_FEATURE_ENCODING    <span class="cm"># 点特征编码配置</span>
+│   ├── DATA_AUGMENTOR            <span class="cm"># 数据增强配置</span>
+│   └── DATA_PROCESSOR            <span class="cm"># 数据处理流水线配置</span>
+├── MODEL
+│   ├── NAME                      <span class="cm"># 'PointPillar'</span>
+│   ├── VFE                       <span class="cm"># 体素特征编码器配置</span>
+│   ├── BACKBONE_3D               <span class="cm"># 3D 骨干网配置</span>
+│   ├── MAP_TO_BEV                <span class="cm"># BEV 投影配置</span>
+│   ├── BACKBONE_2D               <span class="cm"># 2D 骨干网配置</span>
+│   ├── DENSE_HEAD                <span class="cm"># 检测头配置</span>
+│   ├── ROI_HEAD                  <span class="cm"># ROI 头配置（两阶段）</span>
+│   └── POST_PROCESSING           <span class="cm"># NMS、置信度阈值等</span>
+└── OPTIMIZATION
+    ├── BATCH_SIZE_PER_GPU        <span class="cm"># 每 GPU 批大小</span>
+    ├── NUM_EPOCHS                <span class="cm"># 训练 epoch 数</span>
+    ├── OPTIMIZER                 <span class="cm"># 'adam_onecycle' / 'adam' / 'sgd'</span>
+    ├── LR                        <span class="cm"># 基础学习率</span>
+    ├── WEIGHT_DECAY              <span class="cm"># 权重衰减</span>
+    └── GRAD_NORM_CLIP            <span class="cm"># 梯度裁剪阈值</span></code></pre>
+
+<!-- Optimizer & Scheduler -->
+<h2 id="layer3-optimizer">第三层：节点详解 — 优化器与调度器</h2>
+
+<div class="card">
+<h4>📍 定位</h4>
+<p>优化器和学习率调度器的构建逻辑。</p>
+<p class="src">tools/train_utils/optimization/__init__.py:11-68</p>
+</div>
+
+<h4>build_optimizer()</h4>
+<table>
+  <tr><th>optim_cfg.OPTIMIZER</th><th>创建的优化器</th><th>关键参数</th></tr>
+  <tr><td><code>'adam'</code></td><td>torch.optim.Adam</td><td>lr, weight_decay</td></tr>
+  <tr><td><code>'sgd'</code></td><td>torch.optim.SGD</td><td>lr, momentum, weight_decay</td></tr>
+  <tr><td><code>'adam_onecycle'</code></td><td>OptimWrapper(Adam)</td><td>lr, betas, wd，分层学习率</td></tr>
+  <tr><td><code>'adam_cosineanneal'</code></td><td>OptimWrapper(Adam)</td><td>同上，CosineAnnealing 调度</td></tr>
+</table>
+<p class="src">optimization/__init__.py:11-37</p>
+
+<h4>build_scheduler()</h4>
+<table>
+  <tr><th>类型</th><th>调度器</th><th>关键配置</th></tr>
+  <tr><td>adam_onecycle</td><td>OneCycleLR</td><td>DIV_FACTOR, MOMS, PCT_START</td></tr>
+  <tr><td>adam_cosineanneal</td><td>CosineAnnealingWarmRestarts</td><td>T_0, T_mult</td></tr>
+  <tr><td>默认</td><td>LambdaLR</td><td>DECAY_STEP_LIST, LR_DECAY</td></tr>
+</table>
+<p>如果配置中 <code>LR_WARMUP = True</code>，还会创建额外的 warmup 调度器，在前 <code>WARMUP_EPOCH</code> 个 epoch 使用。</p>
+<p class="src">optimization/__init__.py:40-68</p>
+
+<!-- Specific Detectors -->
+<h2 id="layer3-detectors">第三层：节点详解 — 具体检测器实现</h2>
+
+<div class="card">
+<h4>📍 概述</h4>
+<p>不同检测器通过 <span class="badge badge-blue">组合不同模块</span> 和 <span class="badge badge-purple">自定义损失计算</span> 来实现差异化。前向传播共享统一模式：顺序执行 module_list。</p>
+</div>
+
+<h3>PointPillar</h3>
+<p class="src">pcdet/models/detectors/pointpillar.py:4-35</p>
+<table>
+  <tr><th>模块</th><th>使用</th><th>说明</th></tr>
+  <tr><td>VFE</td><td>✅ PillarVFE</td><td>Pillar 特征编码</td></tr>
+  <tr><td>backbone_3d</td><td>❌</td><td>无 3D 骨干（直接 scatter）</td></tr>
+  <tr><td>map_to_bev</td><td>✅ PointPillarScatter</td><td>Pillar → BEV</td></tr>
+  <tr><td>backbone_2d</td><td>✅ BaseBEVBackbone</td><td>2D CNN</td></tr>
+  <tr><td>dense_head</td><td>✅ AnchorHeadSingle</td><td>单阶段检测头</td></tr>
+</table>
+<p>损失：仅 <code>loss_rpn = dense_head.get_loss()</code></p>
+
+<h3>SECOND</h3>
+<p class="src">pcdet/models/detectors/second_net.py:4-35</p>
+<table>
+  <tr><th>模块</th><th>使用</th><th>说明</th></tr>
+  <tr><td>VFE</td><td>✅ MeanVFE</td><td>均值体素编码</td></tr>
+  <tr><td>backbone_3d</td><td>✅ VoxelBackBone8x</td><td>稀疏 3D 卷积</td></tr>
+  <tr><td>map_to_bev</td><td>✅ HeightCompression</td><td>高度压缩</td></tr>
+  <tr><td>backbone_2d</td><td>✅ BaseBEVBackbone</td><td>2D CNN</td></tr>
+  <tr><td>dense_head</td><td>✅ AnchorHeadSingle</td><td>单阶段检测头</td></tr>
+</table>
+<p>损失：仅 <code>loss_rpn = dense_head.get_loss()</code></p>
+
+<h3>PV-RCNN</h3>
+<p class="src">pcdet/models/detectors/pv_rcnn.py:4-37</p>
+<table>
+  <tr><th>模块</th><th>使用</th><th>说明</th></tr>
+  <tr><td>VFE</td><td>✅ MeanVFE</td><td>均值体素编码</td></tr>
+  <tr><td>backbone_3d</td><td>✅ VoxelBackBone8x</td><td>稀疏 3D 卷积</td></tr>
+  <tr><td>map_to_bev</td><td>✅ HeightCompression</td><td>高度压缩</td></tr>
+  <tr><td>backbone_2d</td><td>✅ BaseBEVBackbone</td><td>2D CNN</td></tr>
+  <tr><td>dense_head</td><td>✅ AnchorHeadSingle</td><td>RPN 阶段</td></tr>
+  <tr><td>point_head</td><td>✅ PointHeadSimple</td><td>点级别特征聚合</td></tr>
+  <tr><td>roi_head</td><td>✅ PVRCNNHead</td><td>ROI 细化</td></tr>
+</table>
+<p>损失：<code>loss = loss_rpn + loss_point + loss_rcnn</code>（<span class="badge badge-red">三阶段损失</span>）</p>
+
+<h3>CenterPoint</h3>
+<p class="src">pcdet/models/detectors/centerpoint.py:4-51</p>
+<table>
+  <tr><th>模块</th><th>使用</th><th>说明</th></tr>
+  <tr><td>VFE</td><td>✅ MeanVFE</td><td>均值体素编码</td></tr>
+  <tr><td>backbone_3d</td><td>✅ VoxelBackBone8x</td><td>稀疏 3D 卷积</td></tr>
+  <tr><td>map_to_bev</td><td>✅ HeightCompression</td><td>高度压缩</td></tr>
+  <tr><td>backbone_2d</td><td>✅ BaseBEVBackbone</td><td>2D CNN</td></tr>
+  <tr><td>dense_head</td><td>✅ CenterHead</td><td><span class="badge badge-orange">无锚框</span> 中心点检测</td></tr>
+</table>
+<p>特殊：<span class="badge badge-red">覆盖了 post_processing()</span>，使用 <code>batch_dict['final_box_dicts']</code> 格式</p>
+
+<hr>
+
+<div class="card" style="background: #f0f9ff; border-color: #bae6fd;">
+<h4>📝 阅读总结</h4>
+<p>OpenPCDet 的核心设计理念是 <strong>"模块化 + 配置驱动"</strong>：</p>
+<ul>
+  <li>所有检测器共享同一个 <code>module_topology</code>，通过配置文件选择具体使用哪些模块</li>
+  <li>前向传播统一为顺序执行 <code>module_list</code>，子类仅需定义损失函数的组合方式</li>
+  <li>数据流水线同样采用配置驱动的队列模式（增强队列 + 处理队列）</li>
+  <li>配置系统支持继承和覆盖，使得一个模型配置文件可以复用数据集基础配置</li>
+</ul>
+<p>这种设计使得新增检测器只需：① 编写检测器子类 ② 编写 YAML 配置文件 ③ 注册到 <code>__all__</code> 字典。</p>
+</div>
+
+</div><!-- end main -->
+</body>
+</html>
